@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreshMart - Grocery Store</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #fff; color: #222; }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 60px; border-bottom: 1px solid #eee;
+    position: sticky; top: 0; background: #fff; z-index: 10;
+  }
+  .logo { font-size: 1.5rem; font-weight: 700; color: #2e7d32; }
+  .logo span { color: #222; }
+  nav a {
+    text-decoration: none; color: #555; font-size: 0.95rem;
+    margin-left: 30px; transition: color 0.2s;
+  }
+  nav a:hover, nav a.active { color: #2e7d32; font-weight: 600; }
+
+  /* HERO */
+  .hero { text-align: center; padding: 60px 20px 40px; border-bottom: 1px solid #f0f0f0; }
+  .hero h1 { font-size: 2.4rem; font-weight: 700; }
+  .hero h1 span { color: #2e7d32; }
+  .hero p { margin-top: 10px; color: #777; font-size: 1rem; }
+
+  /* TABS */
+  .tabs {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    padding: 30px 60px 0;
+  }
+  .tab {
+    padding: 8px 20px; border-radius: 50px;
+    border: 1.5px solid #ddd; background: #fff;
+    cursor: pointer; font-size: 0.9rem; font-weight: 500;
+    transition: all 0.2s; font-family: 'Segoe UI', sans-serif;
+    color: #444;
+  }
+  .tab:hover { border-color: #2e7d32; color: #2e7d32; }
+  .tab.active { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+
+  /* SECTION */
+  .section { padding: 30px 60px 60px; }
+  .section-heading {
+    font-size: 1.15rem; font-weight: 700; color: #333;
+    margin-bottom: 20px; padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+
+  /* GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 20px;
+  }
+
+  /* CARD */
+  .card {
+    border: 1px solid #eee; border-radius: 12px;
+    overflow: hidden; background: #fff;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.09); transform: translateY(-3px); }
+  .card img { width: 100%; height: 155px; object-fit: cover; display: block; }
+  .card-body { padding: 12px 14px 14px; }
+  .card-cat { font-size: 0.72rem; color: #2e7d32; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .card-name { font-weight: 600; font-size: 0.95rem; color: #1a1a1a; }
+  .card-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .card-price { font-size: 1rem; font-weight: 700; color: #2e7d32; }
+  .card-rating { font-size: 0.82rem; color: #f59e0b; font-weight: 600; }
+  .card-rating span { color: #bbb; font-weight: 400; font-size: 0.78rem; }
+
+  /* NO RESULTS */
+  .empty { color: #aaa; padding: 40px 0; font-size: 1rem; }
+
+  /* FOOTER */
+  footer { text-align: center; padding: 26px; border-top: 1px solid #eee; color: #bbb; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Fresh<span>Mart</span></div>
+  <div>
+    <a href="/" class="active">Home</a>
+    <a href="/about">About</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>Fresh <span>Grocery</span> Store</h1>
+  <p>Fruits, vegetables, dairy & more — all in one place.</p>
+</div>
+
+<!-- Category Tabs -->
+<div class="tabs" id="tabs">
+  <button class="tab active" onclick="filter('All', this)">🛒 All</button>
+  <button class="tab" onclick="filter('Fruits', this)">🍎 Fruits</button>
+  <button class="tab" onclick="filter('Vegetables', this)">🥦 Vegetables</button>
+  <button class="tab" onclick="filter('Dairy', this)">🥛 Dairy</button>
+  <button class="tab" onclick="filter('Bakery', this)">🍞 Bakery</button>
+  <button class="tab" onclick="filter('Meat', this)">🍗 Meat</button>
+</div>
+
+<div class="section">
+  <div class="section-heading" id="heading">All Products</div>
+  <div class="grid" id="grid"><p class="empty">Loading...</p></div>
+</div>
+
+<footer>© 2025 FreshMart. All rights reserved.</footer>
+
+<script>
+  let allProducts = [];
+
+  fetch('/api/products')
+    .then(r => r.json())
+    .then(data => {
+      allProducts = data;
+      render(data);
+    });
+
+  function filter(category, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+
+    const filtered = category === 'All'
+      ? allProducts
+      : allProducts.filter(p => p.category === category);
+
+    document.getElementById('heading').textContent =
+      category === 'All' ? 'All Products' : category;
+
+    render(filtered);
+  }
+
+  function stars(rating) {
+    const full = Math.floor(rating);
+    const half = rating % 1 >= 0.5 ? 1 : 0;
+    return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
+  }
+
+  function render(products) {
+    const grid = document.getElementById('grid');
+    if (!products.length) {
+      grid.innerHTML = '<p class="empty">No products found.</p>';
+      return;
+    }
+    grid.innerHTML = products.map(p => `
+      <div class="card">
+        <img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/300x155?text=${p.name}'">
+        <div class="card-body">
+          <div class="card-cat">${p.category}</div>
+          <div class="card-name">${p.name}</div>
+          <div class="card-row">
+            <div class="card-price">PKR ${p.price}</div>
+            <div class="card-rating">${stars(p.rating)} <span>${p.rating}</span></div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+</script>
+
+</body>
+</html>
